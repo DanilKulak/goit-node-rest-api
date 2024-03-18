@@ -1,56 +1,66 @@
 import fs from "fs/promises";
-import { nanoid } from "nanoid";
 import path from "path";
-import { fileURLToPath } from "url";
+import { nanoid } from "nanoid";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const contactsPath = path.join(__dirname, "../db/contacts.json");
+const contactsPath = path.resolve("db", "contacts.json");
 
-const listContacts = async () => {
+const getAllContacts = async () => {
     const data = await fs.readFile(contactsPath);
-
     return JSON.parse(data);
 };
 
-const getContactById = async (id) => {
-    const contacts = await listContacts();
-
-    const contact = contacts.find((contact) => contact.id === id);
-
-    return contact || null;
+const getOneContact = async (id) => {
+    const contacts = await getAllContacts();
+    return contacts.find((contact) => contact.id === id) || null;
 };
 
-const addContact = async (name, email, phone) => {
-    const contacts = await listContacts();
+const deleteContact = async (id) => {
+    const contacts = await getAllContacts();
+    const contactIndex = contacts.findIndex((contact) => contact.id === id);
+
+    if (contactIndex === -1) {
+        return null;
+    }
+
+    const [deletedContact] = contacts.splice(contactIndex, 1);
+
+    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+    return deletedContact;
+};
+
+const createContact = async (data) => {
+    const contacts = await getAllContacts();
 
     const newContact = {
         id: nanoid(),
-        name,
-        email,
-        phone,
+        ...data,
     };
 
     contacts.push(newContact);
-
     await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
     return newContact;
 };
 
-const removeContact = async (contactId) => {
-    const contacts = await listContacts();
+const updateContact = async (id, data) => {
+    const contacts = await getAllContacts();
+    const contactIndex = contacts.findIndex((contact) => contact.id === id);
 
-    const index = contacts.findIndex((contact) => contact.id === contactId);
-
-    if (index === -1) {
+    if (contactIndex === -1) {
         return null;
     }
 
-    const deletedContact = contacts.splice(index, 1);
+    contacts[contactIndex] = {...contacts[contactIndex], ...data}
 
     await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
-    return deletedContact;
+    return contacts[contactIndex]
 };
 
-export { listContacts, getContactById, addContact, removeContact };
+export {
+    getAllContacts,
+    getOneContact,
+    deleteContact,
+    createContact,
+    updateContact,
+};
