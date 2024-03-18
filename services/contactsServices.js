@@ -57,7 +57,7 @@ const updateContact = async (id, data) => {
     return contacts[contactIndex]
 };
 
-export {
+export default {
     getAllContacts,
     getOneContact,
     deleteContact,
